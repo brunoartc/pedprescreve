@@ -1,0 +1,16 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+simplejson = "*"
+httpx = "*"
+boto3 = "*"
+
+[dev-packages]
+pylint = "*"
+pytest = "*"
+
+[requires]
+python_version = "3.12"

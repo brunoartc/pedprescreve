@@ -1,0 +1,126 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: JSON documents backend
+
+Parameters:
+  LambdaRole:
+    Type: String
+  AppSubDomain:
+    Type: String
+  version:
+    Type: String
+    Default: "unknown"
+    
+Globals:
+  Function:
+    Timeout: 20
+    Runtime: python3.12
+    Environment:
+      Variables:
+        TABLE_JSON_DOCUMENTS: !Ref JsonDocumentsTable
+        ENV: DEV
+
+Resources:
+  JsonDocumentsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      OnDemandThroughput:
+        MaxReadRequestUnits: 2
+        MaxWriteRequestUnits: 1
+
+  VersionHandler:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: main.version_handler
+      Role: !Sub '${LambdaRole}'
+      Environment:
+        Variables:
+          version: !Ref version
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            Path: /version
+            Method: GET
+            RestApiId: !Ref JsonDocsApi
+
+  GetJsonDocumentHandler:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: app.handlers.json_document.handle_get_json_document
+      Role: !Sub '${LambdaRole}'
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            Path: /json-documents
+            Method: GET
+            RestApiId: !Ref JsonDocsApi
+
+  CreateJsonDocumentHandler:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: app.handlers.json_document.handle_create_json_document
+      Role: !Sub '${LambdaRole}'
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            Path: /json-documents
+            Method: POST
+            RestApiId: !Ref JsonDocsApi
+
+  UpdateJsonDocumentHandler:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: app.handlers.json_document.handle_update_json_document
+      Role: !Sub '${LambdaRole}'
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            Path: /json-documents
+            Method: PUT
+            RestApiId: !Ref JsonDocsApi
+        ApiEventCORS:
+          Type: Api
+          Properties:
+            Path: /json-documents
+            Method: OPTIONS
+            RestApiId: !Ref JsonDocsApi
+
+  DeleteJsonDocumentHandler:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: app.handlers.json_document.handle_delete_json_document
+      Role: !Sub '${LambdaRole}'
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            Path: /json-documents
+            Method: DELETE
+            RestApiId: !Ref JsonDocsApi
+
+  JsonDocsApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      OpenApiVersion: "2.0"
+      Cors:
+        AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
+        AllowOrigin: !Sub "'https://${AppSubDomain}'"
+        AllowHeaders: "'*'"
+        AllowCredentials: true
+      StageName: v0
+
+Outputs:
+  ProdDataEndpoint:
+    Description: API endpoint
+    Value: !Sub "https://${JsonDocsApi}.execute-api.${AWS::Region}.amazonaws.com/v0/"
