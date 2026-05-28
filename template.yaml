@@ -51,6 +51,25 @@ Resources:
             Method: GET
             RestApiId: !Ref JsonDocsApi
 
+  EditorPrescricaoHandler:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: app.handlers.editor_prescricao.handle_editor_prescricao
+      Role: !Sub '${LambdaRole}'
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            Path: /editor-prescricao
+            Method: GET
+            RestApiId: !Ref JsonDocsApi
+        ApiEventCORS:
+          Type: Api
+          Properties:
+            Path: /editor-prescricao
+            Method: OPTIONS
+            RestApiId: !Ref JsonDocsApi
+
   GetJsonDocumentHandler:
     Type: AWS::Serverless::Function
     Properties:
